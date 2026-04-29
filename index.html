@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>スライド構成案ジェネレーター</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 0.4rem;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .steps {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.8rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+    }
+
+    .step.active .step-num {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .step.active { color: #1a1a2e; font-weight: 500; }
+    .step-arrow { color: #ccc; font-size: 0.8rem; }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      padding: 1.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .field { margin-bottom: 1.1rem; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    label .hint {
+      font-weight: 400;
+      text-transform: none;
+      font-size: 0.7rem;
+      color: #aaa;
+      margin-left: 6px;
+      letter-spacing: 0;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: #1a1a2e;
+      background: #fafafa;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: #1a1a2e;
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.7;
+    }
+
+    .divider {
+      height: 1px;
+      background: #f0f0f0;
+      margin: 1.2rem 0;
+    }
+
+    .slide-count-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .slide-btn {
+      flex: 1;
+      padding: 11px 4px;
+      border: 1.5px solid #e5e7eb;
+      background: #fafafa;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.18s;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .slide-btn:hover {
+      border-color: #1a1a2e;
+      color: #1a1a2e;
+      background: #fff;
+    }
+
+    .slide-btn.selected {
+      border: 2px solid #1a1a2e;
+      background: #1a1a2e;
+      color: #fff;
+      font-weight: 600;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26,26,46,0.18);
+    }
+
+    .slide-btn .check { display: none; font-size: 0.8rem; }
+    .slide-btn.selected .check { display: inline; }
+
+    .selected-label {
+      font-size: 0.72rem;
+      color: #aaa;
+      margin-top: 7px;
+      min-height: 16px;
+    }
+
+    .selected-label span { color: #333; font-weight: 600; }
+
+    .generate-btn {
+      width: 100%;
+      padding: 14px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .generate-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .generate-btn:active { transform: translateY(0); }
+    .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      padding: 11px 14px;
+      background: #fff0f0;
+      border: 1.5px solid #fca5a5;
+      border-radius: 9px;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      line-height: 1.6;
+      display: none;
+      margin-bottom: 1rem;
+    }
+    .error-msg.visible { display: block; }
+
+    .output-section { display: none; }
+    .output-section.visible { display: block; }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .output-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border: 1.5px solid #e5e7eb;
+      background: #fafafa;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+
+    .copy-btn:hover { border-color: #1a1a2e; color: #1a1a2e; background: #fff; }
+
+    .copy-btn.copied {
+      border-color: #059669;
+      color: #059669;
+      background: #ecfdf5;
+    }
+
+    .output-box {
+      background: #f8fafc;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 9px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.8;
+      color: #1a1a2e;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+      min-height: 80px;
+    }
+
+    .gamma-tip {
+      margin-top: 10px;
+      padding: 11px 14px;
+      background: #ecfdf5;
+      border: 1.5px solid #6ee7b7;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      color: #065f46;
+      line-height: 1.7;
+    }
+
+    .gamma-tip strong { font-weight: 700; }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.3rem; }
+      .slide-btn { font-size: 0.78rem; padding: 10px 2px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>スライド構成案ジェネレーター</h1>
+      <p>情報を入力するだけで、Gamma貼り付け用のMarkdown構成案をAIが自動生成します</p>
+    </header>
+
+    <div class="steps">
+      <div class="step active"><div class="step-num">1</div><span>入力</span></div>
+      <div class="step-arrow">›</div>
+      <div class="step"><div class="step-num">2</div><span>AI生成</span></div>
+      <div class="step-arrow">›</div>
+      <div class="step"><div class="step-num">3</div><span>コピー → Gamma</span></div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label>テーマ <span class="hint">例：新サービスのご提案</span></label>
+        <input type="text" id="theme" placeholder="プレゼンのテーマを入力" />
+      </div>
+      <div class="field">
+        <label>ターゲット <span class="hint">例：30代の経営者</span></label>
+        <input type="text" id="target" placeholder="誰に向けた資料ですか？" />
+      </div>
+      <div class="field">
+        <label>目的・ゴール <span class="hint">例：サービス導入の承認を得る</span></label>
+        <input type="text" id="goal" placeholder="このプレゼンで達成したいことは？" />
+      </div>
+      <div class="field">
+        <label>伝えたい要点・箇条書きメモ <span class="hint">思いつくままでOK</span></label>
+        <textarea id="memo" placeholder="・課題：〇〇&#10;・解決策：〇〇&#10;・費用：〇〇&#10;・スケジュール：〇〇"></textarea>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>スライド枚数の目安</label>
+        <div class="slide-count-row">
+          <button class="slide-btn" onclick="selectCount(this,'5〜8枚')"><span class="check">✓</span>5〜8枚</button>
+          <button class="slide-btn selected" onclick="selectCount(this,'10〜12枚')"><span class="check">✓</span>10〜12枚</button>
+          <button class="slide-btn" onclick="selectCount(this,'15〜20枚')"><span class="check">✓</span>15〜20枚</button>
+        </div>
+        <div class="selected-label" id="selectedLabel">選択中：<span>10〜12枚</span></div>
+      </div>
+    </div>
+
+    <div id="errorMsg" class="error-msg"></div>
+
+    <button class="generate-btn" id="genBtn" onclick="generate()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">構成案を生成する</span>
+    </button>
+
+    <div class="output-section" id="outputSection">
+      <div class="output-header">
+        <span class="output-label">Markdown 構成案</span>
+        <button class="copy-btn" id="copyBtn" onclick="copyOutput()">コピー</button>
+      </div>
+      <div class="output-box" id="outputBox"></div>
+      <div class="gamma-tip">
+        <strong>次のステップ：</strong> 上記をコピー → Gammaを開く →「新しいAI」→「テキストから生成（Paste text）」に貼り付け
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedCount = '10〜12枚';
+    let outputText = '';
+
+    function selectCount(btn, val) {
+      selectedCount = val;
+      document.querySelectorAll('.slide-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('selectedLabel').innerHTML = '選択中：<span>' + val + '</span>';
+    }
+
+    async function generate() {
+      const theme = document.getElementById('theme').value.trim();
+      const target = document.getElementById('target').value.trim();
+      const goal = document.getElementById('goal').value.trim();
+      const memo = document.getElementById('memo').value.trim();
+      const errEl = document.getElementById('errorMsg');
+
+      errEl.className = 'error-msg';
+
+      if (!theme || !target || !goal || !memo) {
+        errEl.textContent = 'すべての項目を入力してください。';
+        errEl.className = 'error-msg visible';
+        return;
+      }
+
+      const btn = document.getElementById('genBtn');
+      const spinner = document.getElementById('spinner');
+      const btnText = document.getElementById('btnText');
+      const outputSection = document.getElementById('outputSection');
+      const outputBox = document.getElementById('outputBox');
+
+      btn.disabled = true;
+      spinner.style.display = 'block';
+      btnText.textContent = '生成中...';
+      outputSection.className = 'output-section';
+      outputBox.textContent = '';
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme, target, goal, memo, slideCount: selectedCount })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || '生成に失敗しました');
+        }
+
+        outputText = data.result;
+        outputBox.textContent = outputText;
+        outputSection.className = 'output-section visible';
+        document.getElementById('copyBtn').className = 'copy-btn';
+        document.getElementById('copyBtn').textContent = 'コピー';
+
+      } catch (err) {
+        errEl.textContent = 'エラーが発生しました：' + err.message;
+        errEl.className = 'error-msg visible';
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = '構成案を生成する';
+      }
+    }
+
+    function copyOutput() {
+      if (!outputText) return;
+      navigator.clipboard.writeText(outputText).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✓ コピーしました';
+        btn.className = 'copy-btn copied';
+        setTimeout(() => {
+          btn.textContent = 'コピー';
+          btn.className = 'copy-btn';
+        }, 2500);
+      });
+    }
+  </script>
+</body>
+</html>
